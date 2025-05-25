@@ -59,7 +59,7 @@ root/
 
    ```bash
    conda env create -f environment.yml
-   conda activate mobile_robots
+   conda activate tiago_simulation
    ```
 ## 🚀 Usage
 1. Launch the Webots simulation
