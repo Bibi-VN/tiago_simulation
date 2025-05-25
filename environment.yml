@@ -1,4 +1,4 @@
-name: tiago_simulationsimulation
+name: tiago_simulation
 channels:
   - defaults
   - conda-forge
