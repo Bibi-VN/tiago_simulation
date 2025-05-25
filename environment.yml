@@ -1,4 +1,4 @@
-name: mobile_robots
+name: tiago_simulationsimulation
 channels:
   - defaults
   - conda-forge
