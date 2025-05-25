@@ -1,0 +1,14 @@
+name: mobile_robots
+channels:
+  - defaults
+  - conda-forge
+dependencies:
+  - python=3.10
+  - numpy
+  - matplotlib
+  - scipy
+  - scikit-image
+  - pip
+  - pip:
+      - py_trees
+      - webots

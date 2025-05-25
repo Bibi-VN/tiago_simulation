@@ -17,6 +17,24 @@ from set_waypoint import SetWaypoint
 from straight_line_navigation import StraightLineNavigation
 
 # Webots Robot Interface
+import sys
+import os
+
+# Try importing Webots controller module; if fails, append likely path
+try:
+    from controller import Supervisor
+except ModuleNotFoundError:
+    # Attempt default Webots install location (Linux)
+    default_path = "/usr/local/webots/lib/controller/python"
+    if os.path.exists(default_path):
+        sys.path.append(default_path)
+        try:
+            from controller import Supervisor
+        except ModuleNotFoundError:
+            raise ImportError(" Failed to import Webots 'controller' module after setting path.")
+    else:
+        raise ImportError(" Webots controller module not found. Please ensure Webots is installed and its Python API is accessible.")
+
 from controller import Supervisor
 
 # create the Robot instance.
@@ -62,107 +80,83 @@ right_motor = robot.getDevice('wheel_right_joint')
 left_motor.setPosition(float('inf'))
 right_motor.setPosition(float('inf'))
 
+def create_pick_place_sequence(blackboard, pick_goals, place_goals, name_suffix=""):
+    return Sequence(
+        name=f"PickAndPlace{name_suffix}",
+        memory = True,
+        children=[
+            Recognition(name = f"detect object {name_suffix}", blackboard = blackboard),
+            ObjectSelector(name = f"select object {name_suffix}", blackboard = blackboard),
+            SetWaypoint(name = f"set waypoint to jar {name_suffix}", blackboard = blackboard, src_key = "approach_point", direction = "forward", dst_key = "target_point"),
+            Manipulation(name = f"reach", blackboard = blackboard, config_name = "reach"),
+            StraightLineNavigation(name = f"approach to jar {name_suffix}", blackboard = blackboard),
+            Manipulation(name = f"close gripper", blackboard = blackboard, config_name = "closeGripper"),
+            SetWaypoint(name = f"set waypoint to retreat from jar {name_suffix}", blackboard = blackboard, src_key = "retreat_point", direction = "backward", dst_key = "target_point"),
+            StraightLineNavigation(name = f"retreat from jar {name_suffix}", blackboard = blackboard),
+            Manipulation(name = f"safe after pick {name_suffix}", blackboard = blackboard, config_name = "safe"),
+
+            Planning(name = f"plan to go to table, step 1", blackboard = blackboard, goal = place_goals[0]),
+            Navigation(name = f"go to table, step 1", blackboard = blackboard),
+            Planning(name = f"plan to go to table, step 2", blackboard = blackboard, goal = place_goals[1]),
+            Navigation(name = f"go to table, step 2", blackboard = blackboard),
+            
+            Manipulation(name = f"prep put 1", blackboard = blackboard, config_name = "prepare_put_1"),
+            Manipulation(name = f"prep put 2", blackboard = blackboard, config_name = "prepare_put_2"),
+            Manipulation(name = f"put", blackboard = blackboard, config_name = "put"),
+            Manipulation(name = f"open gripper", blackboard = blackboard, config_name = "openGripper"),
+            Manipulation(name = f"after put", blackboard = blackboard, config_name = "after_put"),
+            Manipulation(name = f"safe", blackboard = blackboard, config_name = "safe"),
+
+            # Go back to worktop for next pick
+            Planning(name = f"plan to back to worktop, step 1", blackboard = blackboard, goal = pick_goals[0]),
+            Navigation(name=f"back to worktop, step 1", blackboard = blackboard),
+            Planning(name=f"plan to back to worktop, step 2", blackboard=blackboard, goal=pick_goals[1]),
+            Navigation(name=f"back to worktop, step 2", blackboard=blackboard),
+            Planning(name=f"plan to back to worktop, step 3", blackboard=blackboard, goal=pick_goals[2]),
+            Navigation(name=f"back to worktop, step 3", blackboard=blackboard),
+        ]
+    )
 # Define root node and behavior tree
 root = Sequence(
     name = "Main",
     memory = True,
     children = [
         Selector(
-            name = "Does map exists?",
+            name = "Check Map",
             memory = True,
             children = [
-                DoesMapExist(name = "Test for map"), 
+                DoesMapExist(name = "Map Exists?"),
                 Parallel(
                     name = "Mapping",
                     policy = py_trees.common.ParallelPolicy.SuccessOnAll(),
                     children = [
-                        Navigation(name = "move around the table", blackboard = blackboard),
-                        Mapping(name = "map the environment", blackboard = blackboard),
+                        Navigation(name = "Move Around", blackboard = blackboard),
+                        Mapping(name = "Mapping", blackboard = blackboard)
                     ]
                 )
             ]
         ),
-        #Manipulation(name = "put", blackboard = blackboard, config_name = 'put'),
-        Recognition(name = "detect object", blackboard = blackboard),
-        ObjectSelector(name = "select nearest object", blackboard = blackboard),
-        SetWaypoint(name="set approach point", blackboard = blackboard, src_key = "approach_point", direction = 'forward', dst_key = "target_point"),
-        Manipulation(name = "reach", blackboard = blackboard, config_name = 'reach'),
-        StraightLineNavigation(name = "approach jar", blackboard = blackboard),
-        Manipulation(name = "close Gripper", blackboard = blackboard, config_name = 'closeGripper'),
-        SetWaypoint(name="set retreat point", blackboard = blackboard, src_key = "retreat_point", direction = 'backward', dst_key = "target_point"),
-        StraightLineNavigation(name = "retreat from jar", blackboard = blackboard),
-        Manipulation(name = "safe", blackboard = blackboard, config_name = 'safe'),
-        Planning(name = "planning to table", blackboard = blackboard, goal = (0.65, -0.15)),
-        Navigation(name = "move to table", blackboard = blackboard),
-        Planning(name = "planning to table", blackboard = blackboard, goal = (0.4, -1.75)),
-        Navigation(name = "move to table", blackboard = blackboard),
-        Manipulation(name = "prepare to put 1", blackboard = blackboard, config_name = 'prepare_put_1'),
-        Manipulation(name = "prepare to put 2", blackboard = blackboard, config_name = 'prepare_put_2'),
-        Manipulation(name = "put", blackboard = blackboard, config_name = 'put'),
-        Manipulation(name = "put", blackboard = blackboard, config_name = 'openGripper'),
-        Manipulation(name = "after put", blackboard = blackboard, config_name = 'after_put'),
-        Manipulation(name = "safe", blackboard = blackboard, config_name = 'safe'),
-        Planning(name = "planning to worktop", blackboard = blackboard, goal = (-1.75, -2.2)),
-        Navigation(name = "move to worktop", blackboard = blackboard),
-        Planning(name = "planning to worktop", blackboard = blackboard, goal = (-1.2, 0.1)),
-        Navigation(name = "move to worktop", blackboard = blackboard),
-        Planning(name = "planning to worktop", blackboard = blackboard, goal = (0.4, 0.2)),
-        Navigation(name = "move to worktop", blackboard = blackboard),
-        
-        Recognition(name = "detect object", blackboard = blackboard),
-        ObjectSelector(name = "select nearest object", blackboard = blackboard),
-        SetWaypoint(name="set approach point", blackboard = blackboard, src_key = "approach_point", direction = 'forward', dst_key = "target_point"),
-        Manipulation(name = "reach", blackboard = blackboard, config_name = 'reach'),
-        StraightLineNavigation(name = "approach jar", blackboard = blackboard),
-        Manipulation(name = "close Gripper", blackboard = blackboard, config_name = 'closeGripper'),
-        SetWaypoint(name="set retreat point", blackboard = blackboard, src_key = "retreat_point", direction = 'backward', dst_key = "target_point"),
-        StraightLineNavigation(name = "retreat from jar", blackboard = blackboard),
-        Manipulation(name = "safe", blackboard = blackboard, config_name = 'safe'),
-        Planning(name = "planning to table", blackboard = blackboard, goal = (0.65, 0.0)),
-        Navigation(name = "move to table", blackboard = blackboard),
-        Planning(name = "planning to place", blackboard = blackboard, goal = (0.4, -1.95)),
-        Navigation(name = "move to place position", blackboard = blackboard),
-        Manipulation(name = "prepare to put 1", blackboard = blackboard, config_name = 'prepare_put_1'),
-        Manipulation(name = "prepare to put 2", blackboard = blackboard, config_name = 'prepare_put_2'),
-        Manipulation(name = "put", blackboard = blackboard, config_name = 'put'),
-        Manipulation(name = "put", blackboard = blackboard, config_name = 'openGripper'),
-        Manipulation(name = "after put", blackboard = blackboard, config_name = 'after_put'),
-        Manipulation(name = "safe", blackboard = blackboard, config_name = 'safe'),
-        Planning(name = "planning to worktop", blackboard = blackboard, goal = (-1.54, -2.96)),
-        Navigation(name = "move to worktop", blackboard = blackboard),
-        Planning(name = "planning to worktop", blackboard = blackboard, goal = (-1.2, 0.1)),
-        Navigation(name = "move to worktop", blackboard = blackboard),
-        Planning(name = "planning to worktop", blackboard = blackboard, goal = (0.4, 0.2)),
-        Navigation(name = "move to worktop", blackboard = blackboard),
-        
-        Recognition(name = "detect object", blackboard = blackboard),
-        ObjectSelector(name = "select nearest object", blackboard = blackboard),
-        SetWaypoint(name="set approach point", blackboard = blackboard, src_key = "approach_point", direction = 'forward', dst_key = "target_point"),
-        Manipulation(name = "reach", blackboard = blackboard, config_name = 'reach'),
-        StraightLineNavigation(name = "approach jar", blackboard = blackboard),
-        Manipulation(name = "close Gripper", blackboard = blackboard, config_name = 'closeGripper'),
-        SetWaypoint(name="set retreat point", blackboard = blackboard, src_key = "retreat_point", direction = 'backward', dst_key = "target_point"),
-        StraightLineNavigation(name = "retreat from jar", blackboard = blackboard),
-        Manipulation(name = "safe", blackboard = blackboard, config_name = 'safe'),
-        Planning(name = "planning to table", blackboard = blackboard, goal = (0.8, 0.05)),
-        Navigation(name = "move to table", blackboard = blackboard),
-        Planning(name = "planning to place", blackboard = blackboard, goal = (0.4, -2.15)),
-        Navigation(name = "move to place position", blackboard = blackboard),
-        Manipulation(name = "prepare to put 1", blackboard = blackboard, config_name = 'prepare_put_1'),
-        Manipulation(name = "prepare to put 2", blackboard = blackboard, config_name = 'prepare_put_2'),
-        Manipulation(name = "put", blackboard = blackboard, config_name = 'put'),
-        Manipulation(name = "put", blackboard = blackboard, config_name = 'openGripper'),
-        Manipulation(name = "after put", blackboard = blackboard, config_name = 'after_put'),
-        Manipulation(name = "safe", blackboard = blackboard, config_name = 'safe'),
-        Planning(name = "planning to worktop", blackboard = blackboard, goal = (-1.54, -2.96)),
-        Navigation(name = "move to worktop", blackboard = blackboard),
-        Planning(name = "planning to worktop", blackboard = blackboard, goal = (-1.2, 0.1)),
-        Navigation(name = "move to worktop", blackboard = blackboard),
-        Planning(name = "planning to worktop", blackboard = blackboard, goal = (0.4, 0.2)),
-        Navigation(name = "move to worktop", blackboard = blackboard),
+        # 3 pick-place cycles
+        create_pick_place_sequence(
+            blackboard,
+            pick_goals = [(-1.75, -2.2), (-1.2, 0.1), (0.4, 0.2)],
+            place_goals = [(0.65, -0.15), (0.4, -1.75)],
+            name_suffix = "1"
+        ),
+        create_pick_place_sequence(
+            blackboard,
+            pick_goals = [(-1.54, -2.96), (-1.2, 0.1), (0.4, 0.2)],
+            place_goals = [(0.65, 0.0), (0.4, -1.95)],
+            name_suffix = "2"
+        ),
+        create_pick_place_sequence(
+            blackboard,
+            pick_goals = [(-1.54, -2.96), (-1.2, 0.1), (0.4, 0.2)],
+            place_goals = [(0.8, 0.05), (0.4, -2.15)],
+            name_suffix = "3"
+        )
     ]
 )
-
 
 # Setup all children recursively                
 root.setup_with_descendants()
