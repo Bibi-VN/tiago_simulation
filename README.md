@@ -127,8 +127,15 @@ This subtree includes:
 
 > Behavior logic is fully implemented using `py_trees`, and each Pick-and-Place cycle is built using `create_pick_place_sequence(...)`.
 
-
-
 ## 📄 License
 
 ## 👤 Author
+
+**Phu Vo**  
+Email: [ngocphuvo.work@gmail.com]
+
+## 🙏 Acknowledgements
+
+This project is inspired by and references the **_Introduction to Robotics with Webots Specialization_** taught by [Prof. Nikolaus Correll](https://www.coursera.org/instructor/correll) on Coursera.  
+The specialization is part of the Master's program in Computer Science at the **University of Colorado Boulder**.
+
