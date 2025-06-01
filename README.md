@@ -137,28 +137,3 @@ Email: [ngocphuvo.work@gmail.com]
 
 This project is inspired by and references the **_Introduction to Robotics with Webots Specialization_** taught by [Prof. Nikolaus Correll](https://www.coursera.org/instructor/correll) on Coursera.  
 The specialization is part of the Master's program in Computer Science at the **University of Colorado Boulder**.
-
-
-- **Sequence** (Main)
-  - **Selector** (Check Map)
-    - `Condition`: Map Exists?
-    - **Parallel** (Mapping) [SuccessOnAll]
-      - `Action`: Move Around
-      - `Action`: Mapping
-  - **Sequence** (Pick and Place 1)
-    - `Action`: Navigate to Pick Point (-1.75, -2.2) / (-1.2, 0.1) / (0.4, 0.2)
-    - `Action`: Grasp Object
-    - `Action`: Navigate to Place Point (0.65, -0.15) / (0.4, -1.75)
-    - `Action`: Place Object
-  - **Sequence** (Pick and Place 2)
-    - `Action`: Navigate to Pick Point (-1.54, -2.96) / ...
-    - `Action`: Grasp Object
-    - `Action`: Navigate to Place Point (0.65, 0.0) / ...
-    - `Action`: Place Object
-  - **Sequence** (Pick and Place 3)
-    - `Action`: Navigate to Pick Point (-1.54, -2.96) / ...
-    - `Action`: Grasp Object
-    - `Action`: Navigate to Place Point (0.8, 0.05) / ...
-    - `Action`: Place Object
-
-
