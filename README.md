@@ -97,15 +97,15 @@ This subtree includes:
 
 1. **Perception**
    - `Recognition`: detects jars
-   - `ObjectSelector`: chooses one of detected jars
+   - `ObjectSelector`: chooses one of the detected jars
 
 2. **Approach and Pick**
-   - `SetWaypoint`: sets goal to approach the detected jar
-   - `StraightLineNavigation`: executes safe approach to jar
+   - `SetWaypoint`: sets a goal to approach the detected jar
+   - `StraightLineNavigation`: executes a safe approach to the jar
    - `Manipulation (reach, closeGripper)`
 
 3. **Placement**
-   - `Planning + Navigation`: multi-step path to table
+   - `Planning + Navigation`: multi-step path to the table
    - `Manipulation (put, openGripper, safe)`
 
 4. **Return**
