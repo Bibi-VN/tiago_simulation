@@ -85,8 +85,7 @@ The robot's behavior is structured as a hierarchical **Behavior Tree (BT)**, con
 
 - **Check Map** (Selector):
   - `DoesMapExist`: Checks if a prior map is available
-  - `Mapping`: A parallel block that performs simultaneous navigation and mapping if no map exists
-
+  - `Mapping`: The robot will follow the predefined trajectory to build the map of the environment
 - **Pick-and-Place Cycles**:
   - Three repeated `PickAndPlace` sequences handle autonomous object manipulation
 
